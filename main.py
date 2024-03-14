@@ -1,5 +1,8 @@
 import numpy as np
 import math
+import warnings
+warnings.filterwarnings("ignore")
+
 
 prx = np.array([[108], [115], [106], [97], [95], [91], [97], [83], [83], [78], [54], [67], [56], [53], [61], [115], [81], [78], [30], [45], [99], [32], [25], [28], [90], [89]])
 pry = np.array([95, 96, 95, 97, 93, 94, 95, 93, 92, 86, 73, 80, 65, 69, 77, 96, 87, 89, 60, 63, 95, 61, 55, 56, 94, 93])
@@ -213,9 +216,9 @@ class prl:
 
     def predict(self, x):
         print("")
-        print("Prediccion lineal dado ", str(x), " : ", str(self.predictLineal(x)))
-        print("Prediccion Cuadratica dado ", str(x), " : ", str(self.predictQuadratical(x)))
-        print("Prediccion Cubica dado ", str(x), " : ", str(self.predictCubical(x)))
+        print("Prediccion lineal dado ", str(x), " : \n", self.Bsl[0], " + ", self.Bsl[1], " * ", x,  " = ", str(self.predictLineal(x)))
+        print("Prediccion Cuadratica dado ", str(x), " : \n", self.Bsq[0], " + ", self.Bsq[1], " * ", x, " + ", self.Bsc[2], " * ", x**2, " = ", str(self.predictQuadratical(x)))
+        print("Prediccion Cubica dado ", str(x), " : \n ", self.Bsc[0], " + ", self.Bsc[1], " * ", x, " + ", self.Bsc[2], " * ", x**2, " + ", self.Bsc[3], " * ", x**3, " =", str(self.predictCubical(x)))
 
     def predictLineal(self, x):
         return float(self.Bsl[0] + (self.Bsl[1]*x))
@@ -267,8 +270,11 @@ def toPositive(n):
         return n
 
 exam = prl(prx, pry)
-exam.predict(24)
-exam.predict(25)
-exam.predict(27)
+print("\nEndogenas:")#endogenas
 exam.predict(28)
-exam.predict(29)
+exam.predict(90)
+exam.predict(89)
+print("\nExogenas:")#exogenas
+exam.predict(44)
+exam.predict(47)
+exam.predict(52)
