@@ -12,33 +12,33 @@ B = None
 class Dataset:
     x = np.array
     x2 = np.array
+    x3 = np.array
     y = np.array
     matrix = list()
     def __init__(self, inx, iny):
         self.x = np.insert(inx, 0, 1, axis=1)
         unos = list()
         l1 = inx
-        print(l1)
         l2 = list()
         l3 = list()
         
         for i in range(len(inx)):
             unos.append(1)
-            l2.append(l1[i]**2)
-            l3.append(l1[i]**3)
-        #self.x2 = np.array([unos, l1, l2])
-
-        #print(self.x2)
-        #l2 = [[1,i,i**2]for i in l1]
-        print("L2 = ", str(l2))
-        #print("L3 = ",str(l3))
-        #self.x2 = np.insert(self.x, 2, l2, axis=1) #test
-        #print("X2 ",str(self.x2))
+            l2.append(l1[i][0]**2)
+            l3.append(l1[i][0]**3)
+        self.x2 = np.insert(self.x, 2, l2, axis=1)
+        self.x3 = np.insert(self.x, 2, l3, axis=1)
         self.y = iny
         self.matrix = toMatrix(inx, iny)
 
     def getX(self):
         return self.x
+
+    def getX2(self):
+        return self.x2
+
+    def getX3(self):
+        return self.x3
 
     def getY(self):
         return self.y
@@ -171,7 +171,10 @@ class prl:
             self.n = len(inx)
             self.data = Dataset(inx, iny)
             self.RegresionLineal()
+            self.RegresionCuadratica()
+            self.RegresionCubica()
     def RegresionLineal(self):
+        print("Lineal")
         print("X = ", str(self.data.getX()))
         Xt = np.transpose(self.data.getX())
         print("Transpuesta: ", str(Xt))
@@ -180,7 +183,36 @@ class prl:
         Xi = np.linalg.inv(mr)
         print("Xi = ", str(Xi))
         mr2 = (Xi @ Xt) @ self.data.getY()
-        print("Betas: ",str(mr2))
+        for i in range(len(self.data.getX()[0])):
+            print("Beta ",str(i),":", mr2[i])
+        return mr2
+
+    def RegresionCuadratica(self):
+        print("Cuadratica")
+        print("X = ", str(self.data.getX2()))
+        Xt = np.transpose(self.data.getX2())
+        print("Transpuesta: ", str(Xt))
+        mr = np.dot(Xt,  self.data.getX2())
+        print(mr)
+        Xi = np.linalg.inv(mr)
+        print("Xi = ", str(Xi))
+        mr2 = (Xi @ Xt) @ self.data.getY()
+        for i in range(len(self.data.getX2()[0])):
+            print("Beta ", str(i), ":", mr2[i])
+        return mr2
+
+    def RegresionCubica(self):
+        print("Cubica")
+        print("X = ", str(self.data.getX3()))
+        Xt = np.transpose(self.data.getX3())
+        print("Transpuesta: ", str(Xt))
+        mr = np.dot(Xt,  self.data.getX3())
+        print(mr)
+        Xi = np.linalg.inv(mr)
+        print("Xi = ", str(Xi))
+        mr2 = (Xi @ Xt) @ self.data.getY()
+        for i in range(len(self.data.getX3()[0])):
+            print("Beta ", str(i), ":", mr2[i])
         return mr2
 
     def predict(self, x):
