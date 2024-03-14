@@ -15,7 +15,6 @@ class Dataset:
     sx = list()
     sx2 = list()
     sx3 = list()
-    matrix = list()
     def __init__(self, inx, iny):
         self.sx = inx
         self.x = np.insert(inx, 0, 1, axis=1)
@@ -28,16 +27,23 @@ class Dataset:
             unos.append(1)
             l2.append(l1[i][0]**2)
             l3.append(l1[i][0]**3)
+        self.sx2 = l2
+        self.sx3 = l3
         self.x2 = np.insert(self.x, 2, l2, axis=1)
         self.x3 = np.insert(self.x2, 2, l3, axis=1)
         self.y = iny
-        self.matrix = toMatrix(inx, iny)
 
     def getX(self):
         return self.x
 
     def getXsimple(self):
         return self.sx
+
+    def getX2simple(self):
+        return self.sx2
+
+    def getX3simple(self):
+        return self.sx3
 
     def getX2(self):
         return self.x2
@@ -48,12 +54,6 @@ class Dataset:
     def getY(self):
         return self.y
 
-    def getMatrix(self):
-        return self.matrix
-
-    def null(self):
-        self.x = list()
-        self.y = list()
 
 class DiscreteMath:
     def SumX(x):
@@ -179,8 +179,11 @@ class prl:
 
     def CalculaBs(self):
             self.Bsl = self.RegresionLineal()
+            self.getRLineal()
             self.Bsq = self.RegresionCuadratica()
+            self.getRQuadratical()
             self.Bsc = self.RegresionCubica()
+            self.getRCubical()
     def RegresionLineal(self):
         print("Lineal")
         Xt = np.transpose(self.data.getX())
@@ -188,7 +191,7 @@ class prl:
         Xi = np.linalg.inv(mr)
         mr2 = (Xi @ Xt) @ self.data.getY()
         for i in range(len(mr2)):
-            print("Beta ",str(i),":", mr2[i])
+            print("Beta ", str(i), ":", mr2[i])
         return mr2
 
     def RegresionCuadratica(self):
@@ -212,9 +215,9 @@ class prl:
         return mr2
 
     def predict(self, x):
-        print("Prediccion lineal dado ",str(x)," : ",str(self.predictLineal(x)))
-        print("Prediccion Cuadratica dado ",str(x)," : ", str(self.predictQuadratical(x)))
-        print("Prediccion Cubica dado ",str(x)," : ", str(self.predictCubical(x)))
+        print("Prediccion lineal dado ", str(x), " : ", str(self.predictLineal(x)))
+        print("Prediccion Cuadratica dado ", str(x), " : ", str(self.predictQuadratical(x)))
+        print("Prediccion Cubica dado ", str(x), " : ", str(self.predictCubical(x)))
 
     def predictLineal(self, x):
         return self.Bsl[0] + (self.Bsl[1]*x)
@@ -226,32 +229,39 @@ class prl:
         return self.Bsc[0] + (self.Bsc[1]*x) + (self.Bsc[2]*(x**2)) + (self.Bsc[3]*(x**3))
 
     def getR2(self):
-        self.getRLineal()
         return self.r2
 
     def getR(self):
-        self.getRLineal()
         return self.r
 
     def getRLineal(self):
-        Ssr = sum((yi - (self.Bsl[0] + self.Bsl[1] * xi)) ** 2 for xi, yi in zip(self.data.getXsimple(), self.data.getY()))
+        Ssr = sum((yi - (self.predictLineal(xi))) ** 2 for xi, yi in zip(self.data.getXsimple(), self.data.getY()))
         y_mean = DiscreteMath.SumY(self.data.getY()) / self.n
         Sst = sum((yi - y_mean) ** 2 for yi in self.data.getY())
         self.r2[0] = 1 - (float(Ssr) / float(Sst))
         self.r[0] = math.sqrt(self.r2[0])
+        print("R: ", str(self.r[0]))
+        print("R2: ", str(self.r2[0]))
 
-def toMatrix(list1, list2):
-    if len(list1) == len(list2):
-        r = list()
-        for i in range(len(list1)):
-            r.append((list1[i], list2[i]))
-        #print(r)
-        return r
+    def getRQuadratical(self):
+        Ssr = sum((yi - (self.predictQuadratical(xi))) ** 2 for xi, yi in zip(self.data.getXsimple(), self.data.getY()))
+        y_mean = DiscreteMath.SumY(self.data.getY()) / self.n
+        Sst = sum((yi - y_mean) ** 2 for yi in self.data.getY())
+        self.r2[1] = 1 - (float(Ssr) / float(Sst))
+        self.r[1] = math.sqrt(self.r2[1])
+        print("R: ", str(self.r[1]))
+        print("R2: ", str(self.r2[1]))
 
+    def getRCubical(self):
+        Ssr = sum((yi - (self.predictCubical(xi))) ** 2 for xi, yi in zip(self.data.getXsimple(), self.data.getY()))
+        y_mean = DiscreteMath.SumY(self.data.getY()) / self.n
+        Sst = sum((yi - y_mean) ** 2 for yi in self.data.getY())
+        self.r2[2] = 1 - (float(Ssr) / float(Sst))
+        self.r[2] = math.sqrt(self.r2[2])
+        print("R: ", str(self.r[2]))
+        print("R2: ", str(self.r2[2]))
 
 exam = prl(prx,pry)
-print("R squared = "+str(exam.getR2()))
-print("R = "+str(exam.getR()))
 exam.predict(24)
 exam.predict(25)
 exam.predict(27)
