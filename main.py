@@ -2,7 +2,7 @@ import numpy as np
 import math
 
 prx = np.array([[108], [115], [106], [97], [95], [91], [97], [83], [83], [78], [54], [67], [56], [53], [61], [115], [81], [78], [30], [45], [99], [32], [25], [28], [90], [89]])
-pry = [95, 96, 95, 97, 93, 94, 95, 93, 92, 86, 73, 80, 65, 69, 77, 96, 87, 89, 60, 63, 95, 61, 55, 56, 94, 93]
+pry = np.array([95, 96, 95, 97, 93, 94, 95, 93, 92, 86, 73, 80, 65, 69, 77, 96, 87, 89, 60, 63, 95, 61, 55, 56, 94, 93])
 seleccion = None
 indice = None
 B = None
@@ -30,7 +30,7 @@ class Dataset:
         self.sx2 = l2
         self.sx3 = l3
         self.x2 = np.insert(self.x, 2, l2, axis=1)
-        self.x3 = np.insert(self.x2, 2, l3, axis=1)
+        self.x3 = np.insert(self.x2, 3, l3, axis=1)
         self.y = iny
 
     def getX(self):
@@ -187,8 +187,7 @@ class prl:
     def RegresionLineal(self):
         print("Lineal")
         Xt = np.transpose(self.data.getX())
-        mr = np.dot(Xt,  self.data.getX())
-        Xi = np.linalg.inv(mr)
+        Xi = np.linalg.inv(Xt @  self.data.getX())
         mr2 = (Xi @ Xt) @ self.data.getY()
         for i in range(len(mr2)):
             print("Beta ", str(i), ":", mr2[i])
@@ -197,8 +196,7 @@ class prl:
     def RegresionCuadratica(self):
         print("Cuadratica")
         Xt = np.transpose(self.data.getX2())
-        mr = np.dot(Xt,  self.data.getX2())
-        Xi = np.linalg.inv(mr)
+        Xi = np.linalg.inv(Xt @  self.data.getX2())
         mr2 = (Xi @ Xt) @ self.data.getY()
         for i in range(len(mr2)):
             print("Beta ", str(i), ":", mr2[i])
@@ -207,26 +205,27 @@ class prl:
     def RegresionCubica(self):
         print("Cubica")
         Xt = np.transpose(self.data.getX3())
-        mr = np.dot(Xt,  self.data.getX3())
-        Xi = np.linalg.inv(mr)
+        Xi = np.linalg.inv(Xt @ self.data.getX3())
         mr2 = (Xi @ Xt) @ self.data.getY()
         for i in range(len(mr2)):
             print("Beta ", str(i), ":", mr2[i])
         return mr2
 
     def predict(self, x):
+        print("")
         print("Prediccion lineal dado ", str(x), " : ", str(self.predictLineal(x)))
         print("Prediccion Cuadratica dado ", str(x), " : ", str(self.predictQuadratical(x)))
         print("Prediccion Cubica dado ", str(x), " : ", str(self.predictCubical(x)))
 
     def predictLineal(self, x):
-        return self.Bsl[0] + (self.Bsl[1]*x)
+        return float(self.Bsl[0] + (self.Bsl[1]*x))
 
     def predictQuadratical(self, x):
-        return self.Bsq[0] + (self.Bsq[1]*x) + (self.Bsq[2]*(x**2))
+        return float(self.Bsq[0] + (self.Bsq[1]*x) + (self.Bsq[2]*(x**2)))
 
     def predictCubical(self, x):
-        return self.Bsc[0] + (self.Bsc[1]*x) + (self.Bsc[2]*(x**2)) + (self.Bsc[3]*(x**3))
+        res = float(self.Bsc[0] + (self.Bsc[1]*x) + (self.Bsc[2]*(x**2)) + (self.Bsc[3]*(x**3)))
+        return res
 
     def getR2(self):
         return self.r2
@@ -257,14 +256,19 @@ class prl:
         y_mean = DiscreteMath.SumY(self.data.getY()) / self.n
         Sst = sum((yi - y_mean) ** 2 for yi in self.data.getY())
         self.r2[2] = 1 - (float(Ssr) / float(Sst))
-        self.r[2] = math.sqrt(self.r2[2])
+        self.r[2] = math.sqrt(toPositive(self.r2[2]))
         print("R: ", str(self.r[2]))
         print("R2: ", str(self.r2[2]))
 
-exam = prl(prx,pry)
+def toPositive(n):
+    if n < 0:
+        return n * -1
+    else:
+        return n
+
+exam = prl(prx, pry)
 exam.predict(24)
 exam.predict(25)
 exam.predict(27)
 exam.predict(28)
 exam.predict(29)
-
