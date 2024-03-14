@@ -2,9 +2,7 @@ import numpy as np
 import math
 
 prx = np.array([[108], [115], [106], [97], [95], [91], [97], [83], [83], [78], [54], [67], [56], [53], [61], [115], [81], [78], [30], [45], [99], [32], [25], [28], [90], [89]])
-#prx = [108,115,106,97,95,91,97,83,83,78,54,67,56,53,61,115,81,78,30,45,99,32,25,28,90,89]
 pry = [95, 96, 95, 97, 93, 94, 95, 93, 92, 86, 73, 80, 65, 69, 77, 96, 87, 89, 60, 63, 95, 61, 55, 56, 94, 93]
-#pry = [4,5,6]
 seleccion = None
 indice = None
 B = None
@@ -14,25 +12,32 @@ class Dataset:
     x2 = np.array
     x3 = np.array
     y = np.array
+    sx = list()
+    sx2 = list()
+    sx3 = list()
     matrix = list()
     def __init__(self, inx, iny):
+        self.sx = inx
         self.x = np.insert(inx, 0, 1, axis=1)
         unos = list()
         l1 = inx
         l2 = list()
         l3 = list()
-        
+
         for i in range(len(inx)):
             unos.append(1)
             l2.append(l1[i][0]**2)
             l3.append(l1[i][0]**3)
         self.x2 = np.insert(self.x, 2, l2, axis=1)
-        self.x3 = np.insert(self.x, 2, l3, axis=1)
+        self.x3 = np.insert(self.x2, 2, l3, axis=1)
         self.y = iny
         self.matrix = toMatrix(inx, iny)
 
     def getX(self):
         return self.x
+
+    def getXsimple(self):
+        return self.sx
 
     def getX2(self):
         return self.x2
@@ -108,20 +113,18 @@ class pls:
             self.calculaBs()
 
     def calculaBs(self):
-        Sx = DiscreteMath.SumX(self.data.getX())  # obtenemos los valores parciales de las ecuaciones para facilitar el calculo
+        Sx = DiscreteMath.SumX(self.data.getXsimple())  # obtenemos los valores parciales de las ecuaciones para facilitar el calculo
         Sy = DiscreteMath.SumY(self.data.getY())
-        Sxy = DiscreteMath.SumXY(self.data.getX(), self.data.getY())
-        Sx2 = DiscreteMath.SumX2(self.data.getX())
+        Sxy = DiscreteMath.SumXY(self.data.getXsimple(), self.data.getY())
+        Sx2 = DiscreteMath.SumX2(self.data.getXsimple())
         Sy2 = DiscreteMath.SumY2(self.data.getY())
-        self.B1 = (self.n * Sxy - (DiscreteMath.SumXSumY(self.data.getX(), self.data.getY()))) / (self.n * Sx2 - (DiscreteMath.SumXSumX(self.data.getX())))  # calculamos el valor de B1, necesario para obtener B0
+        self.B1 = (self.n * Sxy - (DiscreteMath.SumXSumY(self.data.getXsimple(), self.data.getY()))) / (self.n * Sx2 - (DiscreteMath.SumXSumX(self.data.getXsimple())))  # calculamos el valor de B1, necesario para obtener B0
         self.B0 = (Sy - (self.B1 * Sx)) / self.n  # calculamos B0
         Ssr = sum((yi - (self.B0 + self.B1 * xi)) ** 2 for xi, yi in zip(self.data.getX(), self.data.getY()))
         y_mean = Sy / self.n
         Sst = sum((yi - y_mean) ** 2 for yi in self.data.getY())
-        self.r = ((self.n*Sxy)-(DiscreteMath.SumXSumY(self.data.getX(), self.data.getY())))/math.sqrt((self.n*Sx2-(DiscreteMath.SumXSumX(self.data.getX())))*(self.n*Sy2-(DiscreteMath.SumXSumX(self.data.getY()))))
+        self.r = ((self.n*Sxy)-(DiscreteMath.SumXSumY(self.data.getXsimple(), self.data.getY())))/math.sqrt((self.n*Sx2-(DiscreteMath.SumXSumX(self.data.getXsimple())))*(self.n*Sy2-(DiscreteMath.SumXSumX(self.data.getY()))))
         self.r2 = 1 - (Ssr / Sst)
-        print("B0 es igual a ", self.B0)  # imprimimos los valores en consola, para implementaciones sin interfaz grafica
-        print("B1 es igual a ", self.B1)
 
     def getB0(self): #funcion de regresion lineal simple, solicita como entrada dos arreglos
         return self.B0
@@ -161,69 +164,81 @@ class pls:
 
 class prl:
     data = None
-    Bs = list()
-    n = 0
-    r = 0
-    r2 = 0
+    Bsl = list()
+    Bsq = list()
+    Bsc = list()
+    r = [0,0,0]
+    r2 = [0,0,0]
+    n=0
 
     def __init__(self, inx, iny):
         if (len(inx) == len(iny)):
             self.n = len(inx)
             self.data = Dataset(inx, iny)
-            self.RegresionLineal()
-            self.RegresionCuadratica()
-            self.RegresionCubica()
+            self.CalculaBs()
+
+    def CalculaBs(self):
+            self.Bsl = self.RegresionLineal()
+            self.Bsq = self.RegresionCuadratica()
+            self.Bsc = self.RegresionCubica()
     def RegresionLineal(self):
         print("Lineal")
-        print("X = ", str(self.data.getX()))
         Xt = np.transpose(self.data.getX())
-        print("Transpuesta: ", str(Xt))
         mr = np.dot(Xt,  self.data.getX())
-        print(mr)
         Xi = np.linalg.inv(mr)
-        print("Xi = ", str(Xi))
         mr2 = (Xi @ Xt) @ self.data.getY()
-        for i in range(len(self.data.getX()[0])):
+        for i in range(len(mr2)):
             print("Beta ",str(i),":", mr2[i])
         return mr2
 
     def RegresionCuadratica(self):
         print("Cuadratica")
-        print("X = ", str(self.data.getX2()))
         Xt = np.transpose(self.data.getX2())
-        print("Transpuesta: ", str(Xt))
         mr = np.dot(Xt,  self.data.getX2())
-        print(mr)
         Xi = np.linalg.inv(mr)
-        print("Xi = ", str(Xi))
         mr2 = (Xi @ Xt) @ self.data.getY()
-        for i in range(len(self.data.getX2()[0])):
+        for i in range(len(mr2)):
             print("Beta ", str(i), ":", mr2[i])
         return mr2
 
     def RegresionCubica(self):
         print("Cubica")
-        print("X = ", str(self.data.getX3()))
         Xt = np.transpose(self.data.getX3())
-        print("Transpuesta: ", str(Xt))
         mr = np.dot(Xt,  self.data.getX3())
-        print(mr)
         Xi = np.linalg.inv(mr)
-        print("Xi = ", str(Xi))
         mr2 = (Xi @ Xt) @ self.data.getY()
-        for i in range(len(self.data.getX3()[0])):
+        for i in range(len(mr2)):
             print("Beta ", str(i), ":", mr2[i])
         return mr2
 
     def predict(self, x):
-        print("aun no hago predicciones")
+        print("Prediccion lineal dado ",str(x)," : ",str(self.predictLineal(x)))
+        print("Prediccion Cuadratica dado ",str(x)," : ", str(self.predictQuadratical(x)))
+        print("Prediccion Cubica dado ",str(x)," : ", str(self.predictCubical(x)))
+
+    def predictLineal(self, x):
+        return self.Bsl[0] + (self.Bsl[1]*x)
+
+    def predictQuadratical(self, x):
+        return self.Bsq[0] + (self.Bsq[1]*x) + (self.Bsq[2]*(x**2))
+
+    def predictCubical(self, x):
+        return self.Bsc[0] + (self.Bsc[1]*x) + (self.Bsc[2]*(x**2)) + (self.Bsc[3]*(x**3))
 
     def getR2(self):
-
-        print("aun no tengo R2")
+        self.getRLineal()
+        return self.r2
 
     def getR(self):
-        print("aun no tengo R")
+        self.getRLineal()
+        return self.r
+
+    def getRLineal(self):
+        Ssr = sum((yi - (self.Bsl[0] + self.Bsl[1] * xi)) ** 2 for xi, yi in zip(self.data.getXsimple(), self.data.getY()))
+        y_mean = DiscreteMath.SumY(self.data.getY()) / self.n
+        Sst = sum((yi - y_mean) ** 2 for yi in self.data.getY())
+        self.r2[0] = 1 - (float(Ssr) / float(Sst))
+        self.r[0] = math.sqrt(self.r2[0])
 
 def toMatrix(list1, list2):
     if len(list1) == len(list2):
@@ -235,11 +250,11 @@ def toMatrix(list1, list2):
 
 
 exam = prl(prx,pry)
-
+print("R squared = "+str(exam.getR2()))
+print("R = "+str(exam.getR()))
 exam.predict(24)
 exam.predict(25)
 exam.predict(27)
 exam.predict(28)
 exam.predict(29)
-print("R squared = "+str(exam.getR2()))
-print("R = "+str(exam.getR()))
+
